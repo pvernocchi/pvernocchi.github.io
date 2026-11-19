@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pablo Vernocchi — Builder</title>
+<meta name="description" content="Pablo Vernocchi — side projects, experiments and open source." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script>
+  (function () {
+    var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #0b0b0f;
+    --muted: #6b6b76;
+    --line: rgba(15, 15, 30, 0.08);
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-strong: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --shadow: 0 10px 40px -12px rgba(20, 20, 50, 0.18);
+    --accent: #ff6600;
+    --accent-2: #7c5cff;
+    --accent-3: #00c2a8;
+    --radius: 22px;
+    --blob-opacity: 0.45;
+  }
+  [data-theme="dark"] {
+    --bg: #0a0a0c;
+    --fg: #f4f4f6;
+    --muted: #9a9aa6;
+    --line: rgba(255, 255, 255, 0.08);
+    --glass: rgba(24, 24, 30, 0.5);
+    --glass-strong: rgba(30, 30, 38, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6);
+    --blob-opacity: 0.3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background .4s ease, color .4s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* Background */
+  .bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+  .blob {
+    position: absolute; width: 480px; height: 480px; border-radius: 50%;
+    filter: blur(90px); opacity: var(--blob-opacity);
+    animation: float 18s ease-in-out infinite;
+  }
+  .blob.b1 { background: var(--accent); top: -120px; left: -100px; }
+  .blob.b2 { background: var(--accent-2); top: 30%; right: -150px; animation-delay: -6s; }
+  .blob.b3 { background: var(--accent-3); bottom: -160px; left: 30%; animation-delay: -12s; }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+  }
+  .grid-bg {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at 50% 0%, #000 30%, transparent 75%);
+  }
+  .spotlight {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 30%), rgba(124, 92, 255, 0.10), transparent 60%);
+  }
+
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    width: min(1100px, calc(100% - 32px)); z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px 10px 20px; border-radius: 999px;
+    transition: padding .3s ease, top .3s ease;
+  }
+  nav.scrolled { top: 10px; padding: 6px 8px 6px 18px; }
+  .logo { font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 800;
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1.4);
+  }
+  .logo:hover .logo-mark { transform: rotate(-12deg) scale(1.1); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    font-size: 14px; color: var(--muted); padding: 8px 14px; border-radius: 999px;
+    transition: color .2s, background .2s;
+  }
+  .nav-links a:hover { color: var(--fg); background: var(--line); }
+  .controls { display: flex; align-items: center; gap: 8px; }
+
+  .lang-switch {
+    position: relative; display: flex; gap: 2px; padding: 4px; border-radius: 999px;
+    background: var(--line);
+  }
+  .lang-indicator {
+    position: absolute; top: 4px; left: 4px; width: 34px; height: 26px; border-radius: 999px;
+    background: var(--glass-strong); box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+    transition: transform .35s cubic-bezier(.2, .8, .2, 1.2);
+  }
+  .lang-btn {
+    position: relative; z-index: 1; width: 34px; height: 26px; border: 0; background: transparent;
+    cursor: pointer; display: grid; place-items: center; border-radius: 999px;
+    opacity: .55; transition: opacity .2s, transform .2s;
+  }
+  .lang-btn:hover { opacity: 1; transform: scale(1.08); }
+  .lang-btn.active { opacity: 1; }
+  .lang-btn svg { width: 20px; height: 14px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+
+  .theme-toggle {
+    width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--line); color: var(--fg); display: grid; place-items: center;
+    transition: transform .5s cubic-bezier(.2, .8, .2, 1.4), background .2s;
+  }
+  .theme-toggle:hover { transform: rotate(30deg) scale(1.08); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .moon { display: none; }
+  [data-theme="dark"] .theme-toggle .sun { display: none; }
+  [data-theme="dark"] .theme-toggle .moon { display: block; }
+
+  /* Layout */
+  main { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+  section { padding: 110px 0 40px; }
+
+  /* Hero */
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-top: 140px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px;
+    border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--muted);
+    transition: transform .25s;
+  }
+  .badge:hover { transform: translateY(-2px); }
+  .badge .pill { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.6); animation: pulse 2s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+
+  h1 {
+    margin-top: 28px; font-size: clamp(42px, 8vw, 88px); line-height: 1.02; letter-spacing: -0.045em; font-weight: 800;
+  }
+  .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shine 8s linear infinite;
+  }
+  @keyframes shine { to { background-position: 300% 0; } }
+  .typed { display: inline-block; min-height: 1.1em; }
+  .caret { display: inline-block; width: 4px; height: .85em; background: var(--accent); margin-left: 6px; vertical-align: -0.05em; border-radius: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .lead { margin-top: 24px; max-width: 620px; font-size: clamp(17px, 2vw, 20px); color: var(--muted); }
+
+  .cta { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 24px; border-radius: 14px; font-weight: 600; font-size: 15px; cursor: pointer; border: 0;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn-primary { background: var(--fg); color: var(--bg); box-shadow: 0 8px 24px -8px rgba(0,0,0,.35); }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0; transform: translateX(-120%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    transition: transform .6s ease;
+  }
+  .btn-primary:hover::after { transform: translateX(120%); }
+  .btn-ghost { color: var(--fg); }
+  .btn .arrow { transition: transform .2s; }
+  .btn:hover .arrow { transform: translateX(4px); }
+
+  .meta { margin-top: 48px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .chip { padding: 8px 16px; border-radius: 999px; font-size: 13px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; transition: transform .2s; }
+  .chip:hover { transform: translateY(-3px); color: var(--fg); }
+
+  .scroll-hint { margin-top: 60px; width: 26px; height: 42px; border: 2px solid var(--muted); border-radius: 14px; position: relative; opacity: .6; }
+  .scroll-hint::after { content: ''; position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--muted); animation: scrolldot 1.8s infinite; }
+  @keyframes scrolldot { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(14px); } }
+
+  /* Section headers */
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h2 { font-size: clamp(32px, 5vw, 52px); letter-spacing: -0.035em; line-height: 1.1; margin-top: 10px; font-weight: 800; }
+  .sub { color: var(--muted); margin-top: 12px; max-width: 560px; font-size: 17px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+  .stat { padding: 28px; text-align: left; transition: transform .3s; }
+  .stat:hover { transform: translateY(-4px); }
+  .stat .num { font-size: 44px; font-weight: 800; letter-spacing: -0.04em; }
+  .stat .lbl { color: var(--muted); font-size: 14px; }
+
+  /* Repos */
+  .toolbar { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  .search { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 14px; min-width: 260px; flex: 1; max-width: 380px; }
+  .search input { border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 15px; width: 100%; }
+  .search svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter {
+    border: 1px solid var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .filter:hover { color: var(--fg); border-color: var(--muted); }
+  .filter.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+  .repos { margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .repo {
+    position: relative; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-height: 200px;
+    transform-style: preserve-3d; transition: transform .2s ease-out, box-shadow .3s, opacity .4s;
+    overflow: hidden; will-change: transform;
+  }
+  .repo::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+    background: radial-gradient(350px circle at var(--x, 50%) var(--y, 50%), rgba(255, 102, 0, .14), transparent 50%);
+  }
+  .repo:hover::before { opacity: 1; }
+  .repo:hover { box-shadow: 0 20px 50px -15px rgba(20, 20, 50, .3); }
+  .repo-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .repo-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 16px; flex-shrink: 0; }
+  .repo-name { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; word-break: break-word; }
+  .repo-desc { color: var(--muted); font-size: 14px; flex: 1; }
+  .repo-foot { display: flex; gap: 16px; font-size: 13px; color: var(--muted); align-items: center; flex-wrap: wrap; }
+  .repo-foot span { display: inline-flex; align-items: center; gap: 6px; }
+  .lang-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .ext { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--line); transition: transform .3s, background .3s; flex-shrink: 0; }
+  .repo:hover .ext { transform: rotate(-45deg); background: var(--accent); color: #fff; }
+  .ext svg { width: 16px; height: 16px; }
+  .skeleton { min-height: 200px; background: linear-gradient(90deg, var(--line), transparent, var(--line)); background-size: 200% 100%; animation: sk 1.4s infinite; }
+  @keyframes sk { to { background-position: -200% 0; } }
+  .empty { text-align: center; color: var(--muted); padding: 40px; grid-column: 1 / -1; }
+
+  /* CTA block */
+  .final { margin: 40px 0 0; padding: 64px 32px; text-align: center; position: relative; overflow: hidden; }
+  .final h2 { margin-top: 0; }
+  .final .cta { margin-top: 28px; }
+
+  footer { width: min(1100px, calc(100% - 32px)); margin: 60px auto 30px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 13px; padding: 18px 24px; border-radius: 18px; }
+  footer a:hover { color: var(--fg); }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity .8s cubic-bezier(.2, .8, .2, 1), transform .8s cubic-bezier(.2, .8, .2, 1); }
+  .reveal.in { opacity: 1; transform: none; }
+  [data-i18n] { transition: opacity .2s; }
+  .fading [data-i18n] { opacity: 0; }
+
+  @media (max-width: 760px) {
+    .nav-links { display: none; }
+    .stats { grid-template-columns: 1fr; }
+    .repos { grid-template-columns: 1fr; }
+    .search { max-width: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grid-bg"></div>
+<div class="spotlight"></div>
+
+<nav class="glass" id="nav">
+  <a href="#top" class="logo"><span class="logo-mark">P</span>pvernocchi</a>
+  <div class="nav-links">
+    <a href="#projects" data-i18n="nav.projects">Projects</a>
+    <a href="#about" data-i18n="nav.about">About</a>
+    <a href="#contact" data-i18n="nav.contact">Contact</a>
+  </div>
+  <div class="controls">
+    <div class="lang-switch" role="group" aria-label="Language">
+      <span class="lang-indicator" id="langIndicator"></span>
+      <button class="lang-btn" data-lang="en" title="English" aria-label="English">
+        <svg viewBox="0 0 60 30" preserveAspectRatio="none"><clipPath id="uk-s"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="uk-t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(#uk-s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#uk-t)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g></svg>
+      </button>
+      <button class="lang-btn" data-lang="es" title="Español" aria-label="Español">
+        <svg viewBox="0 0 750 500" preserveAspectRatio="none"><rect width="750" height="500" fill="#AA151B"/><rect y="125" width="750" height="250" fill="#F1BF00"/></svg>
+      </button>
+      <button class="lang-btn" data-lang="ca" title="Català" aria-label="Català">
+        <svg viewBox="0 0 810 540" preserveAspectRatio="none"><rect width="810" height="540" fill="#FCDD09"/><path stroke="#DA121A" stroke-width="60" d="M0,90H810m0,120H0m0,120H810m0,120H0"/></svg>
+      </button>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main id="top">
+  <section class="hero">
+    <a href="#projects" class="badge glass reveal">
+      <span class="pill" data-i18n="hero.badgePill">New</span>
+      <span class="dot"></span>
+      <span data-i18n="hero.badge">Shipping side projects from Barcelona</span>
+    </a>
+    <h1 class="reveal">
+      <span data-i18n="hero.title1">I build</span><br />
+      <span class="grad typed" id="typed"></span><span class="caret"></span>
+    </h1>
+    <p class="lead reveal" data-i18n="hero.lead">Hi, I'm Pablo Vernocchi. I turn ideas into small, useful products — fast, simple and open source.</p>
+    <div class="cta reveal">
+      <a href="#projects" class="btn btn-primary magnetic"><span data-i18n="hero.cta1">Explore projects</span> <span class="arrow">→</span></a>
+      <a href="https://github.com/pvernocchi" target="_blank" rel="noopener" class="btn btn-ghost glass magnetic">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        GitHub
+      </a>
+    </div>
+    <div class="meta reveal">
+      <span class="chip glass">📍 Barcelona</span>
+      <span class="chip glass">💼 Microsoft</span>
+      <a class="chip glass" href="http://www.vernocchi.es" target="_blank" rel="noopener">🌐 vernocchi.es</a>
+    </div>
+    <div class="scroll-hint reveal"></div>
+  </section>
+
+  <section id="about">
+    <div class="reveal">
+      <div class="eyebrow" data-i18n="about.eyebrow">Traction</div>
+      <h2 data-i18n="about.title">Small bets. Shipped often.</h2>
+      <p class="sub" data-i18n="about.sub">Every project starts with a real problem — then gets built, launched and shared.</p>
+    </div>
+    <div class="stats">
+      <div class="stat glass reveal"><div class="num" data-count="repos">0</div><div class="lbl" data-i18n="stats.repos">Public repositories</div></div>
+      <div class="stat glass reveal"><div class="num" data-count="stars">0</div><div class="lbl" data-i18n="stats.stars">Stars earned</div></div>
+      <div class="stat glass reveal"><div class="num" data-count="langs">0</div><div class="lbl" data-i18n="stats.langs">Languages used</div></div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="reveal">
+      <div class="eyebrow" data-i18n="projects.eyebrow">Projects</div>
+      <h2 data-i18n="projects.title">What I'm building</h2>
+      <p class="sub" data-i18n="projects.sub">All my public repositories, fetched live from GitHub.</p>
+    </div>
+    <div class="toolbar reveal">
+      <label class="search glass">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="text" data-i18n-placeholder="projects.search" placeholder="Search projects…" />
+      </label>
+      <div class="filters" id="filters"></div>
+    </div>
+    <div class="repos" id="repos">
+      <div class="repo glass skeleton"></div><div class="repo glass skeleton"></div><div class="repo glass skeleton"></div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="final glass reveal">
+      <div class="eyebrow" data-i18n="contact.eyebrow">Let's talk</div>
+      <h2 data-i18n="contact.title">Have an idea? Let's build it.</h2>
+      <p class="sub" style="margin-left:auto;margin-right:auto" data-i18n="contact.sub">Always happy to chat about products, tech and new projects.</p>
+      <div class="cta">
+        <a href="https://github.com/pvernocchi" target="_blank" rel="noopener" class="btn btn-primary magnetic"><span data-i18n="contact.cta1">Follow on GitHub</span> <span class="arrow">→</span></a>
+        <a href="http://www.vernocchi.es" target="_blank" rel="noopener" class="btn btn-ghost glass magnetic"><span data-i18n="contact.cta2">Visit website</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="glass">
+  <span>© <span id="year"></span> Pablo Vernocchi</span>
+  <span data-i18n="footer.made">Made with ☕ in Barcelona</span>
+  <a href="#top" data-i18n="footer.top">Back to top ↑</a>
+</footer>
+
+<script>
+const USER = 'pvernocchi';
+const EXCLUDE = [USER];
+
+const I18N = {
+  en: {
+    'nav.projects': 'Projects', 'nav.about': 'About', 'nav.contact': 'Contact',
+    'hero.badgePill': 'New', 'hero.badge': 'Shipping side projects from Barcelona',
+    'hero.title1': 'I build',
+    'hero.words': ['simple web apps.', 'useful tools.', 'side projects.', 'things people use.'],
+    'hero.lead': "Hi, I'm Pablo Vernocchi. I turn ideas into small, useful products — fast, simple and open source.",
+    'hero.cta1': 'Explore projects',
+    'about.eyebrow': 'Traction', 'about.title': 'Small bets. Shipped often.',
+    'about.sub': 'Every project starts with a real problem — then gets built, launched and shared.',
+    'stats.repos': 'Public repositories', 'stats.stars': 'Stars earned', 'stats.langs': 'Languages used',
+    'projects.eyebrow': 'Projects', 'projects.title': "What I'm building",
+    'projects.sub': 'All my public repositories, fetched live from GitHub.',
+    'projects.search': 'Search projects…', 'projects.all': 'All', 'projects.empty': 'No projects match your search.',
+    'projects.error': "Couldn't load repositories right now.", 'projects.nodesc': 'No description yet.',
+    'projects.updated': 'Updated',
+    'contact.eyebrow': "Let's talk", 'contact.title': "Have an idea? Let's build it.",
+    'contact.sub': 'Always happy to chat about products, tech and new projects.',
+    'contact.cta1': 'Follow on GitHub', 'contact.cta2': 'Visit website',
+    'footer.made': 'Made with ☕ in Barcelona', 'footer.top': 'Back to top ↑'
+  },
+  es: {
+    'nav.projects': 'Proyectos', 'nav.about': 'Sobre mí', 'nav.contact': 'Contacto',
+    'hero.badgePill': 'Nuevo', 'hero.badge': 'Lanzando proyectos desde Barcelona',
+    'hero.title1': 'Construyo',
+    'hero.words': ['apps web sencillas.', 'herramientas útiles.', 'proyectos propios.', 'cosas que se usan.'],
+    'hero.lead': 'Hola, soy Pablo Vernocchi. Convierto ideas en productos pequeños y útiles — rápidos, sencillos y open source.',
+    'hero.cta1': 'Ver proyectos',
+    'about.eyebrow': 'Tracción', 'about.title': 'Apuestas pequeñas. Lanzadas a menudo.',
+    'about.sub': 'Cada proyecto nace de un problema real — y se construye, se lanza y se comparte.',
+    'stats.repos': 'Repositorios públicos', 'stats.stars': 'Estrellas', 'stats.langs': 'Lenguajes usados',
+    'projects.eyebrow': 'Proyectos', 'projects.title': 'En qué estoy trabajando',
+    'projects.sub': 'Todos mis repositorios públicos, cargados en directo desde GitHub.',
+    'projects.search': 'Buscar proyectos…', 'projects.all': 'Todos', 'projects.empty': 'Ningún proyecto coincide con tu búsqueda.',
+    'projects.error': 'No se han podido cargar los repositorios.', 'projects.nodesc': 'Sin descripción todavía.',
+    'projects.updated': 'Actualizado',
+    'contact.eyebrow': 'Hablemos', 'contact.title': '¿Tienes una idea? Construyámosla.',
+    'contact.sub': 'Siempre encantado de hablar de producto, tecnología y nuevos proyectos.',
+    'contact.cta1': 'Sígueme en GitHub', 'contact.cta2': 'Visitar web',
+    'footer.made': 'Hecho con ☕ en Barcelona', 'footer.top': 'Volver arriba ↑'
+  },
+  ca: {
+    'nav.projects': 'Projectes', 'nav.about': 'Sobre mi', 'nav.contact': 'Contacte',
+    'hero.badgePill': 'Nou', 'hero.badge': 'Llançant projectes des de Barcelona',
+    'hero.title1': 'Construeixo',
+    'hero.words': ['apps web senzilles.', 'eines útils.', 'projectes propis.', 'coses que es fan servir.'],
+    'hero.lead': "Hola, sóc en Pablo Vernocchi. Converteixo idees en productes petits i útils — ràpids, senzills i open source.",
+    'hero.cta1': 'Veure projectes',
+    'about.eyebrow': 'Tracció', 'about.title': 'Apostes petites. Llançades sovint.',
+    'about.sub': 'Cada projecte neix d\'un problema real — i es construeix, es llança i es comparteix.',
+    'stats.repos': 'Repositoris públics', 'stats.stars': 'Estrelles', 'stats.langs': 'Llenguatges utilitzats',
+    'projects.eyebrow': 'Projectes', 'projects.title': 'En què estic treballant',
+    'projects.sub': 'Tots els meus repositoris públics, carregats en directe des de GitHub.',
+    'projects.search': 'Cerca projectes…', 'projects.all': 'Tots', 'projects.empty': 'Cap projecte coincideix amb la cerca.',
+    'projects.error': "No s'han pogut carregar els repositoris.", 'projects.nodesc': 'Encara sense descripció.',
+    'projects.updated': 'Actualitzat',
+    'contact.eyebrow': 'Parlem', 'contact.title': 'Tens una idea? Construïm-la.',
+    'contact.sub': 'Sempre content de parlar de producte, tecnologia i nous projectes.',
+    'contact.cta1': 'Segueix-me a GitHub', 'contact.cta2': 'Visita la web',
+    'footer.made': 'Fet amb ☕ a Barcelona', 'footer.top': 'Tornar amunt ↑'
+  }
+};
+
+const LANG_COLORS = { JavaScript: '#f1e05a', TypeScript: '#3178c6', PHP: '#4F5D95', Python: '#3572A5', HTML: '#e34c26', CSS: '#563d7c', 'C#': '#178600', Go: '#00ADD8', Shell: '#89e051', Java: '#b07219', Vue: '#41b883' };
+const GRADIENTS = ['#ff6600,#ff9a3c', '#7c5cff,#b39dff', '#00c2a8,#5ee6d1', '#ef4444,#f97316', '#0ea5e9,#6366f1', '#ec4899,#8b5cf6'];
+
+let lang = localStorage.getItem('lang') || (['es', 'ca'].includes(navigator.language.slice(0, 2)) ? navigator.language.slice(0, 2) : 'en');
+let repos = [];
+let activeFilter = 'all';
+const t = k => I18N[lang][k] ?? I18N.en[k] ?? k;
+
+/* Language */
+function applyLang(animate) {
+  const run = () => {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = t(el.dataset.i18nPlaceholder));
+    const btns = [...document.querySelectorAll('.lang-btn')];
+    btns.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    const idx = btns.findIndex(b => b.dataset.lang === lang);
+    document.getElementById('langIndicator').style.transform = `translateX(${idx * 36}px)`;
+    restartTyping();
+    if (repos.length) { renderFilters(); renderRepos(); }
+  };
+  if (!animate) return run();
+  document.body.classList.add('fading');
+  setTimeout(() => { run(); document.body.classList.remove('fading'); }, 200);
+}
+document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.lang === lang) return;
+  lang = b.dataset.lang; localStorage.setItem('lang', lang); applyLang(true);
+}));
+
+/* Theme */
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+});
+
+/* Typing effect */
+let typeTimer;
+function restartTyping() {
+  clearTimeout(typeTimer);
+  const el = document.getElementById('typed');
+  const words = t('hero.words');
+  let w = 0, c = 0, deleting = false;
+  (function tick() {
+    const word = words[w];
+    el.textContent = word.slice(0, c);
+    if (!deleting && c < word.length) { c++; typeTimer = setTimeout(tick, 70); }
+    else if (!deleting) { deleting = true; typeTimer = setTimeout(tick, 1800); }
+    else if (c > 0) { c--; typeTimer = setTimeout(tick, 35); }
+    else { deleting = false; w = (w + 1) % words.length; typeTimer = setTimeout(tick, 300); }
+  })();
+}
+
+/* Nav scroll + spotlight */
+addEventListener('scroll', () => document.getElementById('nav').classList.toggle('scrolled', scrollY > 30), { passive: true });
+addEventListener('pointermove', e => {
+  document.documentElement.style.setProperty('--mx', e.clientX + 'px');
+  document.documentElement.style.setProperty('--my', e.clientY + 'px');
+}, { passive: true });
+
+/* Magnetic buttons */
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('pointermove', e => {
+    const r = btn.getBoundingClientRect();
+    btn.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.2}px, ${(e.clientY - r.top - r.height / 2) * 0.3}px)`;
+  });
+  btn.addEventListener('pointerleave', () => btn.style.transform = '');
+});
+
+/* Reveal on scroll */
+const io = new IntersectionObserver(entries => entries.forEach((e, i) => {
+  if (e.isIntersecting) { setTimeout(() => e.target.classList.add('in'), i * 80); io.unobserve(e.target); }
+}), { threshold: 0.12 });
+const observeReveal = root => root.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el));
+
+/* Counters */
+function countUp(el, target) {
+  const start = performance.now(), dur = 1400;
+  (function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  })(start);
+}
+
+/* Repos */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const prettyName = n => n.replace(/[-_]+/g, ' ').replace(/\s+$/, '').trim();
+
+function renderFilters() {
+  const langs = [...new Set(repos.map(r => r.language).filter(Boolean))].sort();
+  const box = document.getElementById('filters');
+  box.innerHTML = ['all', ...langs].map(l =>
+    `<button class="filter ${l === activeFilter ? 'active' : ''}" data-f="${esc(l)}">${l === 'all' ? t('projects.all') : esc(l)}</button>`).join('');
+  box.querySelectorAll('.filter').forEach(b => b.addEventListener('click', () => { activeFilter = b.dataset.f; renderFilters(); renderRepos(); }));
+}
+
+function renderRepos() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const list = repos.filter(r =>
+    (activeFilter === 'all' || r.language === activeFilter) &&
+    (!q || (r.name + ' ' + (r.description || '') + ' ' + (r.topics || []).join(' ')).toLowerCase().includes(q)));
+  const box = document.getElementById('repos');
+  if (!list.length) { box.innerHTML = `<div class="empty">${t('projects.empty')}</div>`; return; }
+  const fmt = new Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' });
+  box.innerHTML = list.map((r, i) => {
+    const g = GRADIENTS[i % GRADIENTS.length];
+    const url = r.homepage || r.html_url;
+    return `<a class="repo glass reveal" href="${esc(r.html_url)}" target="_blank" rel="noopener">
+      <div class="repo-head">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="repo-icon" style="background:linear-gradient(135deg,${g})">${esc(r.name[0].toUpperCase())}</div>
+          <div class="repo-name">${esc(prettyName(r.name))}</div>
+        </div>
+        <div class="ext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></div>
+      </div>
+      <div class="repo-desc">${esc(r.description) || `<em>${t('projects.nodesc')}</em>`}</div>
+      <div class="repo-foot">
+        ${r.language ? `<span><i class="lang-dot" style="background:${LANG_COLORS[r.language] || '#999'}"></i>${esc(r.language)}</span>` : ''}
+        <span>★ ${r.stargazers_count}</span>
+        <span>${t('projects.updated')} ${fmt.format(new Date(r.pushed_at))}</span>
+      </div>
+    </a>`;
+  }).join('');
+  box.querySelectorAll('.repo').forEach(attachTilt);
+  observeReveal(box);
+}
+
+function attachTilt(card) {
+  card.addEventListener('pointermove', e => {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    card.style.setProperty('--x', x + 'px'); card.style.setProperty('--y', y + 'px');
+    card.style.transform = `perspective(900px) rotateX(${(y / r.height - 0.5) * -8}deg) rotateY(${(x / r.width - 0.5) * 8}deg) translateY(-4px)`;
+  });
+  card.addEventListener('pointerleave', () => card.style.transform = '');
+}
+
+async function loadRepos() {
+  try {
+    const res = await fetch(`https://api.github.com/users/${USER}/repos?per_page=100&type=owner&sort=pushed`);
+    if (!res.ok) throw new Error(res.status);
+    repos = (await res.json()).filter(r => !r.fork && !r.archived && !EXCLUDE.includes(r.name));
+    renderFilters(); renderRepos();
+    const stats = {
+      repos: repos.length,
+      stars: repos.reduce((s, r) => s + r.stargazers_count, 0),
+      langs: new Set(repos.map(r => r.language).filter(Boolean)).size
+    };
+    const statIO = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { countUp(e.target, stats[e.target.dataset.count]); statIO.unobserve(e.target); }
+    }), { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => statIO.observe(el));
+  } catch (err) {
+    document.getElementById('repos').innerHTML = `<div class="empty">${t('projects.error')} <a href="https://github.com/${USER}?tab=repositories" style="text-decoration:underline">GitHub →</a></div>`;
+  }
+}
+document.getElementById('search').addEventListener('input', renderRepos);
+
+document.getElementById('year').textContent = new Date().getFullYear();
+applyLang(false);
+observeReveal(document);
+loadRepos();
+</script>
+</body>
+</html>
