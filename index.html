@@ -682,7 +682,7 @@ dialog.palette::backdrop{background:rgba(246,246,250,.5);-webkit-backdrop-filter
     [/cost|price|budget/i, '💸'], [/copilot|agent|skill|\bai\b|gpt|llm|bot/i, '🤖'], [/excel|sheet|data/i, '📊']
   ];
   function iconFor(name) { for (var i = 0; i < ICONS.length; i++) if (ICONS[i][0].test(name)) return ICONS[i][1]; return '📦'; }
-  function isProfile(r) { return r.name.toLowerCase() === USER || /\.github\.io$/i.test(r.name); }
+  function isProfile(r) { var name = r.name.toLowerCase(); return name === USER || name === USER + '.github.io'; }
   function ts(d) { var n = Date.parse(d); return isNaN(n) ? 0 : n; }
 
   function getJSON(url, signal) {
@@ -1217,7 +1217,7 @@ dialog.palette::backdrop{background:rgba(246,246,250,.5);-webkit-backdrop-filter
   setInterval(tickClock, 1000);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeAll);
   loadData().then(function (d) {
-    state.repos = d.repos; state.user = d.user; state.live = d.live; state.ready = true;
+    state.repos = d.repos.filter(function (r) { return !isProfile(r); }); state.user = d.user; state.live = d.live; state.ready = true;
     setAvatar((d.user && d.user.avatar_url) || (GH + '.png?size=200'));
     renderAll();
     maybeCount();
