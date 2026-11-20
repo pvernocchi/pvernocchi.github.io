@@ -48,10 +48,6 @@ kbd.k{font-family:var(--mono);font-size:11px;line-height:1;padding:4px 7px;borde
 @keyframes float2{to{transform:translate(-10vw,18vh) scale(.9) rotate(-20deg)}}
 @keyframes float3{to{transform:translate(14vw,-14vh) scale(1.2)}}
 .progress{position:fixed;top:0;inset-inline-start:0;width:100%;height:3px;z-index:70;transform-origin:0 50%;transform:scaleX(var(--p,0));background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--accent-3))}
-.cursor{position:fixed;top:0;left:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:1.5px solid rgba(12,14,22,.22);pointer-events:none;z-index:120;opacity:0;transition:width .35s var(--spring),height .35s var(--spring),margin .35s var(--spring),opacity .3s}
-.cursor.on{opacity:1}
-.cursor.hover{width:60px;height:60px;margin:-30px 0 0 -30px}
-.cursor.down{width:24px;height:24px;margin:-12px 0 0 -12px}
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:110}
 
 /* ---------- Glass ---------- */
@@ -327,7 +323,6 @@ dialog.palette::backdrop{background:rgba(246,246,250,.5);-webkit-backdrop-filter
 <body>
 <div class="bg" aria-hidden="true"><div class="grid"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
 <div class="progress" aria-hidden="true"></div>
-<div class="cursor" aria-hidden="true"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <header class="nav-wrap">
@@ -1144,8 +1139,8 @@ dialog.palette::backdrop{background:rgba(246,246,250,.5);-webkit-backdrop-filter
     }, { passive: true });
   }
 
-  /* ---------------- pointer: parallax, cursor ---------------- */
-  var bg = $('.bg'), cursor = $('.cursor');
+  /* ---------------- pointer: parallax ---------------- */
+  var bg = $('.bg');
   var pointer = { x: innerWidth / 2, y: innerHeight / 3, has: false }, pRAF = 0;
   function onPointerFrame() {
     pRAF = 0;
@@ -1163,21 +1158,6 @@ dialog.palette::backdrop{background:rgba(246,246,250,.5);-webkit-backdrop-filter
     pointer.x = e.clientX; pointer.y = e.clientY; pointer.has = true;
     if (!pRAF) pRAF = requestAnimationFrame(onPointerFrame);
   }, { passive: true });
-
-  if (finePointer && !reduceMotion) {
-    var cur = { x: pointer.x, y: pointer.y };
-    (function loop() {
-      cur.x += (pointer.x - cur.x) * 0.2; cur.y += (pointer.y - cur.y) * 0.2;
-      cursor.style.transform = 'translate3d(' + cur.x.toFixed(1) + 'px,' + cur.y.toFixed(1) + 'px,0)';
-      requestAnimationFrame(loop);
-    })();
-    document.addEventListener('pointermove', function () { cursor.classList.add('on'); }, { once: true, passive: true });
-    document.addEventListener('pointerover', function (e) { cursor.classList.toggle('hover', !!e.target.closest('a,button,input,.repo,.pal-item,.chip')); });
-    document.addEventListener('pointerdown', function () { cursor.classList.add('down'); });
-    document.addEventListener('pointerup', function () { cursor.classList.remove('down'); });
-    document.documentElement.addEventListener('pointerleave', function () { cursor.classList.remove('on'); });
-    document.documentElement.addEventListener('pointerenter', function () { cursor.classList.add('on'); });
-  }
 
   /* ---------------- scroll: progress, nav, timeline ---------------- */
   var navEl = $('#nav'), progress = $('.progress'), sRAF = 0;
